@@ -173,6 +173,7 @@ def forecast_with_model(model_key):
         past_dates,
         future_dates,
         future_enriched,
+        _past_window_raw,
     ) = build_prediction_windows(registry.feature_metadata, registry.scaler)
 
     probs = _predict_probs(model_key, past_window, future_window)
@@ -225,6 +226,7 @@ def compare_models(model_keys=None):
         past_dates,
         future_dates,
         future_enriched,
+        _past_window_raw,
     ) = build_prediction_windows(registry.feature_metadata, registry.scaler)
 
     weather_data = fetch_weather()
