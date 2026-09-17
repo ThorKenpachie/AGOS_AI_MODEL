@@ -273,16 +273,22 @@ def build_prediction_windows(meta, scaler):
     # IDENTIFY PAST/FUTURE POSITIONS
     # ----------------------------------------------------------------------
 
+    # NOTE: the decoder/future window is meant to include TODAY as its
+    # first day (so the API's 14-day forecast starts today instead of
+    # tomorrow) -- mirrors the "Include today and next 13 days" logic in
+    # routes_weather.py. That means the encoder/past window must end
+    # YESTERDAY, not today, so the decoder still immediately follows the
+    # encoder's last day.
     past_positions = [
         i
         for i, d in enumerate(daily_time)
-        if d <= today_str
+        if d < today_str
     ]
 
     future_positions = [
         i
         for i, d in enumerate(daily_time)
-        if d > today_str
+        if d >= today_str
     ]
 
     window = meta[

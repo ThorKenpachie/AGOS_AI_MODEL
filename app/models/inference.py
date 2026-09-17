@@ -72,11 +72,16 @@ def _build_forecast_entries(probs, today, future_enriched):
     Same per-day shape the original API returned: date, day_ahead,
     flood_probability, alert_level, confidence_band, plus the enriched
     Open-Meteo fields for that day.
+
+    day_offset 0 = TODAY (not tomorrow) -- the decoder/future window now
+    starts on today's date, so forecast_out[0] is today's forecast and
+    the 14-day horizon runs today..+13, matching the day count Open-Meteo
+    was asked for.
     """
     forecast_out = []
 
     for day_offset in range(len(probs)):
-        forecast_date = today + datetime.timedelta(days=day_offset + 1)
+        forecast_date = today + datetime.timedelta(days=day_offset)
         p = float(probs[day_offset])
         enriched = future_enriched[day_offset] if day_offset < len(future_enriched) else {}
 
@@ -141,14 +146,19 @@ def _meta_block(model_key, feature_metadata):
             ),
         ],
         "model_reliability": {
+            "avg_accuracy": reliability.get("avg_accuracy_across_14day_horizon"),
             "avg_precision": reliability.get("avg_precision_across_14day_horizon"),
             "avg_recall": reliability.get("avg_recall_across_14day_horizon"),
             "avg_f1": reliability.get("avg_f1_across_14day_horizon"),
             "avg_false_alarm_rate": reliability.get("avg_false_alarm_rate"),
+            "avg_missed_event_rate": reliability.get("avg_missed_event_rate"),
             "measured_on": reliability.get("measured_on"),
             "plain_language": (
                 "Treat flood_probability as a decision-support signal, "
-                "not a certainty score."
+                "not a certainty score. Accuracy is overall correctness "
+                "across all days (flood and non-flood); missed_event_rate "
+                "is the share of actual floods the model failed to flag "
+                "(higher is worse -- it's the complement of recall)."
             ),
         },
         "enriched_metrics_used_by_model": feature_metadata.get("enriched_features_used", []),
@@ -252,7 +262,7 @@ def compare_models(model_keys=None):
     comparison = []
 
     for day_offset in range(horizon):
-        forecast_date = today + datetime.timedelta(days=day_offset + 1)
+        forecast_date = today + datetime.timedelta(days=day_offset)
 
         day_probs = {key: float(probs_by_key[key][day_offset]) for key in keys}
         values = list(day_probs.values())
