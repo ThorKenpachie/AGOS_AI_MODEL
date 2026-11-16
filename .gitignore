@@ -31,6 +31,9 @@ Thumbs.db
 
 *.png
 
+# --- Local backups of previous model artifacts ---
+_backup_*/
+
 # --- Logs / caches ---
 *.log
 .cache/

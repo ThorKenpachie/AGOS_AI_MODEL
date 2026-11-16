@@ -53,12 +53,12 @@ class ModelUnavailableError(Exception):
 # Human-readable label + unit for each feature_metadata.json feature_order
 # entry, used to label the SHAP bar chart / table on the frontend.
 FEATURE_INFO = {
-    "rain_3h":              {"label": "3h Cumulative Rainfall",                    "unit": "mm"},
-    "rain_6h":               {"label": "6h Cumulative Rainfall",                    "unit": "mm"},
-    "rain_12h":              {"label": "12h Cumulative Rainfall",                   "unit": "mm"},
-    "rain_24h":              {"label": "24h Cumulative Rainfall",                   "unit": "mm"},
+    "rain_3h":              {"label": "3-Day Cumulative Rainfall",                    "unit": "mm"},
+    "rain_6h":               {"label": "6-Day Cumulative Rainfall",                    "unit": "mm"},
+    "rain_12h":              {"label": "12-Day Cumulative Rainfall",                   "unit": "mm"},
+    "rain_24h":              {"label": "24-Day Cumulative Rainfall",                   "unit": "mm"},
     "rain_7d_avg":           {"label": "7-Day Rainfall Average",                    "unit": "mm"},
-    "api_5d":                {"label": "Antecedent Precipitation Index (5-day)",    "unit": ""},
+    "api_5d":                {"label": "Antecedent Precipitation Index (k=0.85)",    "unit": ""},
     "typhoon_signal":        {"label": "Typhoon Signal (PAGASA)",                   "unit": "signal"},
     "antecedent_moisture":   {"label": "Antecedent Moisture Proxy",                 "unit": ""},
     "month_sin":             {"label": "Seasonal Encoding (sin)",                   "unit": ""},

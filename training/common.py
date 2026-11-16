@@ -55,6 +55,12 @@ tf.config.experimental.enable_op_determinism()
 # ────────────────────────────────────────────────────────────────
 WINDOW_SIZE = 7     # past days the encoder sees
 HORIZON = 14        # future days the decoder forecasts
+# Target definition: a day is a positive (flood) day only if its
+# flood_severity >= MIN_SEVERITY. Severity-1 (minor, ~0.37 m mean depth)
+# floods are not separable from ordinary rainy days using the available
+# rainfall/typhoon/moisture inputs, so the model targets moderate-or-worse
+# floods (severity 2-4). Set to 1 to reproduce the original any-flood target.
+MIN_SEVERITY = 2
 
 # ────────────────────────────────────────────────────────────────
 # STEP 0: DATASET LOADING
@@ -119,6 +125,12 @@ def preprocess_flood_data(df):
             "column (name containing 'flood'). Found columns: "
             f"{list(df.columns)}"
         )
+
+    col_severity = 'flood_severity' if 'flood_severity' in df.columns else None
+    if col_severity is not None:
+        df[col_target] = (df[col_severity].astype(float) >= MIN_SEVERITY).astype(int)
+        print(f"[target] {col_target} := flood_severity >= {MIN_SEVERITY} "
+              f"({int(df[col_target].sum())} positive days of {len(df)})")
 
     rain = df[col_rain].astype(float)
 
@@ -348,8 +360,15 @@ def prepare_training_data():
     X_raw = df_processed[features].values
     y_raw = df_processed[target_col].astype(int).values
 
+    # Fit the scaler ONLY on the rows covered by training sequences (the
+    # first 80% of sequences), so no test-period statistics leak in.
+    n_seq = len(X_raw) - WINDOW_SIZE - HORIZON + 1
+    n_train_seq = n_seq - int(np.ceil(n_seq * 0.2))  # matches train_test_split(test_size=0.2)
+    last_train_row = n_train_seq - 1 + WINDOW_SIZE + HORIZON
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X_raw)
+    scaler.fit(X_raw[:last_train_row])
+    X_scaled = scaler.transform(X_raw)
+    print(f"Scaler fit on rows 0..{last_train_row - 1} (training period only)")
     joblib.dump(scaler, "flood_scaler.pkl")
     print("-> Saved: flood_scaler.pkl")
 
